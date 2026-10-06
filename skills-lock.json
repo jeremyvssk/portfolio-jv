@@ -1,0 +1,245 @@
+{
+  "version": 1,
+  "skills": {
+    "aframe-webxr": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/aframe-webxr/SKILL.md",
+      "computedHash": "805628258210c6504bcab36dd3407c99d1d0e1d44d17f8a8bdbbb706460c2306"
+    },
+    "animated-component-libraries": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/animated-component-libraries/SKILL.md",
+      "computedHash": "af53d0b6930732ec4cc187351a53a43cdf25f18560fb82be8e1b07dccaf017e1"
+    },
+    "animejs": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/animejs/SKILL.md",
+      "computedHash": "1ccd0229d51e46aaa5e0d7033f1160c9f21440af470fbaab25fb68d9190c3edb"
+    },
+    "babylonjs-engine": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/babylonjs-engine/SKILL.md",
+      "computedHash": "8a3ca92ec7e885e3323473031c7d6f08338d5df7c0e0b9b199635f49094e96a3"
+    },
+    "barba-js": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/barba-js/SKILL.md",
+      "computedHash": "8429138b3ce13a7cba2d786ab03ce3309877f4bd43ed6d7cf1d00afa9768e526"
+    },
+    "blender-web-pipeline": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/blender-web-pipeline/SKILL.md",
+      "computedHash": "342295a1d79b24a1e8ff4c048da51b9a1dc22d9c01dea183af389c0e4a1297e6"
+    },
+    "brief-to-tasks": {
+      "source": "julianoczkowski/designer-skills",
+      "sourceType": "github",
+      "skillPath": "brief-to-tasks/SKILL.md",
+      "computedHash": "8cf913dde5f87b8e5774a5d042dcf7e0dabf69fb511c57ef91eab8e6568927e1"
+    },
+    "deploy-to-vercel": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/deploy-to-vercel/SKILL.md",
+      "computedHash": "03e0eaaa9bf13ba1e7ffa387f5893de6f324c0868c627001f179395a8feaa7c9"
+    },
+    "design-brief": {
+      "source": "julianoczkowski/designer-skills",
+      "sourceType": "github",
+      "skillPath": "design-brief/SKILL.md",
+      "computedHash": "3edf0a4ef2c79b1bf74c759316d43fe985a8a4085eec70f657b764ced95346c2"
+    },
+    "design-flow": {
+      "source": "julianoczkowski/designer-skills",
+      "sourceType": "github",
+      "skillPath": "design-flow/SKILL.md",
+      "computedHash": "4c4a621051f3592aefcf79acad0204960ae58bf733a385b24b8577d3ebc4fde7"
+    },
+    "design-review": {
+      "source": "julianoczkowski/designer-skills",
+      "sourceType": "github",
+      "skillPath": "design-review/SKILL.md",
+      "computedHash": "8d4bbee4f6eb3fc19896064307b8a267c0bddf8dc7800a36a6573e0430815798"
+    },
+    "design-tokens": {
+      "source": "julianoczkowski/designer-skills",
+      "sourceType": "github",
+      "skillPath": "design-tokens/SKILL.md",
+      "computedHash": "20df23737f28b34cb3d0d808d16a958c5ff3bddf0dcb8eedd700735ecb5ae8d1"
+    },
+    "frontend-design": {
+      "source": "julianoczkowski/designer-skills",
+      "sourceType": "github",
+      "skillPath": "frontend-design/SKILL.md",
+      "computedHash": "624e351c79615ca40248769486bd4de7734aea1b4b5059cc46098282d420dc44"
+    },
+    "grill-me": {
+      "source": "julianoczkowski/designer-skills",
+      "sourceType": "github",
+      "skillPath": "grill-me/SKILL.md",
+      "computedHash": "81770c424f4bcbe02503f997d1e633e4e62974e537c824af4780e9161b7e20e7"
+    },
+    "gsap-scrolltrigger": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/gsap-scrolltrigger/SKILL.md",
+      "computedHash": "a084c870960fe6eea6090925245df29b942e627c65db446dfa60a5b9d1f4e834"
+    },
+    "information-architecture": {
+      "source": "julianoczkowski/designer-skills",
+      "sourceType": "github",
+      "skillPath": "information-architecture/SKILL.md",
+      "computedHash": "42b3b96103c0c910ff73841b9c843c8be8111c3d1fdc0746c07d911a23335191"
+    },
+    "lightweight-3d-effects": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/lightweight-3d-effects/SKILL.md",
+      "computedHash": "4fb89172f097f03603cb15cb414b8245b6efc927c72e71a26c4ae4b43bb5d1fa"
+    },
+    "locomotive-scroll": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/locomotive-scroll/SKILL.md",
+      "computedHash": "131f3a40bbb2f73cf7c4c1804fcdf70bca0404a96d09bc92d513e1f875170c31"
+    },
+    "lottie-animations": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/lottie-animations/SKILL.md",
+      "computedHash": "dd662e70b8874e7d78a9b32ef42b32467457f0a7b34aae39f9c052fe8493cc39"
+    },
+    "modern-web-design": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/modern-web-design/SKILL.md",
+      "computedHash": "8ad9815a4a43dd5c3b40b3c700ef89f624d451a9e0cc1adea33909a7f22193dd"
+    },
+    "motion-framer": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/motion-framer/SKILL.md",
+      "computedHash": "16d7c6f24f1d1208500635331e0cf6e06555a44df461e6b1069e4ddb203fd737"
+    },
+    "pixijs-2d": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/pixijs-2d/SKILL.md",
+      "computedHash": "f7bb8d68fd3cad99f0fe3b2c26fceed67983f35d970eee66d35b72d487dd63a5"
+    },
+    "playcanvas-engine": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/playcanvas-engine/SKILL.md",
+      "computedHash": "173000db3829b3196452f888acb5efdb62d009687e52c5b95830ec6cbc9cc6e9"
+    },
+    "react-spring-physics": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/react-spring-physics/SKILL.md",
+      "computedHash": "df2dd730f887868d8586ce94b503ef10cf1a4538651705ecd23be878017ca5de"
+    },
+    "react-three-fiber": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/react-three-fiber/SKILL.md",
+      "computedHash": "d672dfba48620140185d451bc9b6841833eed4306277776efab2e2a82c7b8fbf"
+    },
+    "rive-interactive": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/rive-interactive/SKILL.md",
+      "computedHash": "f36fb49d447a5a688a5a57bd63d7897e282d0eed33560755480a45c476aeceb9"
+    },
+    "scroll-reveal-libraries": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/scroll-reveal-libraries/SKILL.md",
+      "computedHash": "f9d89c4871015d6a90b1942d4176829e7bc8cd8582ecc9e8344c34d50350f663"
+    },
+    "skill-creator": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/skill-creator/SKILL.md",
+      "computedHash": "0aa401c7d5eb0e8475de2e62519ca01dbaab6f0abce9e34b9e87ff07ffb19312"
+    },
+    "spline-interactive": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/spline-interactive/SKILL.md",
+      "computedHash": "d71ae3bd67c771b81c6757a9b23796a25ff2765bf490912da8ec2fbc16289403"
+    },
+    "substance-3d-texturing": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/substance-3d-texturing/SKILL.md",
+      "computedHash": "2e1dfe5482e4c13337d696a9c42e4bcdd40724b403bdd568670ea08b42800662"
+    },
+    "threejs-webgl": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/threejs-webgl/SKILL.md",
+      "computedHash": "9b2cfc1e6512ad6c41e4e9ba56c301d619c2cfd63722793258f4424013ec4b22"
+    },
+    "vercel-cli-with-tokens": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vercel-cli-with-tokens/SKILL.md",
+      "computedHash": "eb16b20dcbe6ce51e0372083d624e0847af1b09487ec99249227d5a8eddebfc0"
+    },
+    "vercel-composition-patterns": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/composition-patterns/SKILL.md",
+      "computedHash": "575757e3e25761c8c562d6e395d29f0b76c98b1273c0bd72d88e6ab1bc9c7d42"
+    },
+    "vercel-optimize": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vercel-optimize/SKILL.md",
+      "computedHash": "c6898b3425a2e2bdf17cbcf38bb5aece2894ee79096961f4140f984e185a4b70"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
+    },
+    "vercel-react-native-skills": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-native-skills/SKILL.md",
+      "computedHash": "41d24eafa7c3d82e270439808f7cfbc4d51aeb2d14f2809a2267c16275784d06"
+    },
+    "vercel-react-view-transitions": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-view-transitions/SKILL.md",
+      "computedHash": "c8952fc9127fa0564d0cb71dccb4215a5608ac933b5831104f09173a97a46f85"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    },
+    "web3d-integration-patterns": {
+      "source": "freshtechbro/claudedesignskills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/web3d-integration-patterns/SKILL.md",
+      "computedHash": "e411bbc6e7f7f928b6fd2f209530446cf74dfa1ff9cfd6adb17ba37317d89e9a"
+    },
+    "writing-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/writing-guidelines/SKILL.md",
+      "computedHash": "25aa3a33a97bddbcb1847ce4a6169106ec25e5b19b15b99c66e75ab383866ef2"
+    }
+  }
+}

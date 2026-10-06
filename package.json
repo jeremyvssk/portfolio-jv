@@ -1,0 +1,39 @@
+{
+  "name": "jeremy-ee",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3020",
+    "build": "next build",
+    "start": "python3 -m http.server 3020 -d out",
+    "lint": "eslint",
+    "deploy": "npm run build && sh scripts/deploy.sh",
+    "probe:serve": "python3 -m http.server 3199 -d out --bind 127.0.0.1",
+    "probe:align": "node scripts/probe-align.mjs",
+    "probe:frames": "node scripts/probe-frames.mjs",
+    "probe:wheel": "node scripts/probe-wheel.mjs",
+    "check:plate": "node --experimental-strip-types scripts/check-plate-band.mjs",
+    "check:marks": "node scripts/check-marks.mjs",
+    "check:legible": "node scripts/check-marks-legible.mjs"
+  },
+  "dependencies": {
+    "motion": "^12.42.2",
+    "next": "16.2.9",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "trustedDependencies": [
+    "sharp",
+    "unrs-resolver"
+  ]
+}

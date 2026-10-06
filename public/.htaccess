@@ -1,0 +1,2 @@
+# Every missing address gets the site's own 404 page (not-found.tsx) instead of the host's.
+ErrorDocument 404 /404.html

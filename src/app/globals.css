@@ -1,0 +1,1483 @@
+@import "tailwindcss";
+
+/* Every colour is a `--p-*` variable on :root; `@theme` maps Tailwind's `bg-paper`/
+   `text-ink`/… utilities onto them (non-inline, so `var(--color-*)` also resolves live
+   inside the hand-written CSS below). */
+@theme {
+  --color-paper: var(--p-paper); /* base ground (lightest) */
+  --color-ground: var(--p-ground); /* soft tonal step, the section-drift ground */
+  --color-ink: var(--p-ink); /* type */
+  --color-ink-near: var(--p-ink-near); /* display type at rest, see :root */
+  --color-ink-soft: var(--p-ink-soft); /* meta, captions, secondary */
+  --color-accent: var(--p-accent); /* FILLS above all, see the note on :root */
+  --color-line: var(--p-line); /* hairlines: card outlines + list separators only */
+  --color-cursor: var(--p-cursor); /* the nav's hover ink, see :root */
+
+  --font-display: var(--font-rubik);
+  --font-ui: var(--font-plex);
+  --font-body: var(--font-plex-sans);
+
+  /* One radius for every bordered box/chip/plate (`rounded-box`). Em-sized accent marks use a 22%
+     radius instead (`.mark-r`), so the curve tracks the mark at any size. */
+  --radius-box: 0.375rem;
+
+  /* Named, not `min-[1920px]:`, so Tailwind sorts it after `md:`; an arbitrary variant loses to it.
+     1920 is where the fluid root outgrows the room `landing()` has to frame a section. */
+  --breakpoint-wide: 120rem;
+
+  /* The page column (`max-w-page`). 72rem is 80% of the width while the root tracks width; once the
+     height binds instead (21:9, big TVs) it would shrink to under half the glass. 62vw is the share
+     a 16:9 screen already gets, so it only takes over on screens wider than that. */
+  --container-page: max(72rem, 62vw);
+}
+
+/* The four-link bar. From md: AND landscape, so an upright iPad (768 to 1024 wide) gets the burger
+   and the same iPad turned sideways gets the bar, which fits there. */
+@custom-variant desk (@media (min-width: 48rem) and (orientation: landscape));
+
+/* ---- Palette: warm paper, black ink, one marigold FILL, and the steel hero pool as the page's
+   only cool note. Values and contrast figures: claude-docs/design-system.md. ---- */
+:root {
+  --p-paper: #f2ece2;
+  --p-ground: #e0d7c6;
+  /* True black: at 15.4:1 the ink's hue is invisible, and the warmth is the paper's job. */
+  --p-ink: #161616;
+  /* Ink at 90% composited over paper as a solid, so it lands the same on any ground. 12.03:1. */
+  --p-ink-near: #2c2b2a;
+  --p-ink-soft: #655e50;
+  /* A FILL colour only. Ink on it is 8.93:1, but it is 1.72:1 on paper, under WCAG's 3:1 for a
+     meaningful graphic: it may be a ground you read ink against, never the thing you must find. A mark
+     that needs finding gets ink, an edge or more area, not another hue. */
+  --p-accent: #f5a623;
+  --p-line: #d0c7b6;
+  /* Steel: the greyest rung of its ladder, so the pool reads as weather rather than as a blue.
+     HeroField reads this property, so there is no TS copy of it. */
+  --p-pool: #7d8fa1;
+  /* The figure's ink: Steel's own deep, so pool and figure are one material. Read by HeroPortrait. */
+  --p-deep: #254464;
+  /* Nav hover ink. It must pass on both grounds (3.59:1 paper, 3.13:1 dark card); marigold cannot. */
+  --p-cursor: #6e7d8c;
+}
+
+/* One lever for the whole page above 1440: every width is rem, so scaling the root grows layout,
+   type and spacing together and keeps every ratio in this file true. /90 is 1440/16 and /56.25 is
+   900/16, so above 1440x900 the page follows whichever axis is scarcer. Only HALF of it follows the
+   window: zoom resizes the viewport, so a fully viewport-scaled root undid browser zoom, and the
+   fixed 0.5rem is the half that zoom still moves. Rem floor and ceiling respect a raised browser
+   font size. */
+html {
+  font-size: clamp(1rem, 0.5rem + 0.5 * min(1rem + (100vw - 1440px) / 90, 100vh / 56.25), 3rem);
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-ui), ui-monospace, monospace;
+}
+
+/* Paper bloom on a fixed layer, not body's background, which repeats per viewport and seams. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(140% 90% at 50% -20%, color-mix(in srgb, var(--color-paper), white 45%) 0%, transparent 55%),
+    linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--color-paper), black 4%) 100%);
+}
+
+/* Hero pool: one soft ellipse straddling the hero/About join so the two read as one moment.
+   A `closest-side` gradient, NOT `filter: blur()`: a live filter re-rasterizes every scroll frame in
+   Firefox. The drift is transform-only. */
+.hero-pools {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: clip;
+  /* NO group `opacity`: compositing this ~2900x1985 layer as a unit cost ~30ms/frame. The old 0.3 is
+     pre-multiplied into the stops instead, which only matches while there is ONE child. */
+}
+
+/* A 1.47:1 box so `ellipse closest-side` fills it edge to edge. Stops carry the layer's 0.3 alpha
+   pre-multiplied, and the box is TRIMMED to the 78% of the radius that paints (stops rescaled by
+   1/0.78). `lib/hero/pool.ts` describes the untrimmed ellipse, so do not "fix" the mismatch.
+   Mirrored by STOPS and the 0.68 dx scale in `lib/hero/pool.ts`; change both. */
+.hero-pools > div {
+  position: absolute;
+  aspect-ratio: 1.47;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse closest-side,
+    color-mix(in srgb, var(--p-pool), transparent 74.5%) 0%,
+    color-mix(in srgb, var(--p-pool), transparent 86.5%) 53.85%,
+    color-mix(in srgb, var(--p-pool), transparent 100%) 100%
+  );
+}
+
+/* Centre far off-screen and below the fold, so the hero sees only the arc's upper rim and About
+   gets its body. Radius buys the curve: a smaller ellipse reads as a blob in the corner.
+   `min()`: the % term keeps the arc curved on a portrait phone, the svh term on an ultrawide.
+   Width is the TRIMMED box's diameter; divide by 0.78 for the number `Pool.strengthAt` uses.
+   Mirrored in `Pool.strengthAt`; change both. */
+.pool-se {
+  left: 84%;
+  top: 102svh;
+  width: min(100.78vmax, 164.42%, 161.77svh);
+  animation: pool-drift 67s linear -26s infinite;
+}
+
+/* Portrait: the long axis follows the viewport's, so the arc rises up the right side. Each `min()`
+   term is its landscape twin /1.47. Mirrored by the sx/sy swap in `Pool.strengthAt`; change both. */
+@media (orientation: portrait) {
+  .hero-pools > div {
+    aspect-ratio: 0.68;
+  }
+  .pool-se {
+    width: min(68.69vmax, 111.65%, 109.92svh);
+  }
+}
+
+/* A closed linear loop never parks at an end. Translate only: scaling deforms the arc. */
+@keyframes pool-drift {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(1.2%, 0.7%);
+  }
+  40% {
+    transform: translate(1%, -1.1%);
+  }
+  60% {
+    transform: translate(-0.9%, -1.3%);
+  }
+  80% {
+    transform: translate(-1.3%, 0.8%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* The figure. Behind every word, and taller than the hero (116svh) so the shoulders dissolve into
+   About with no bottom edge. Sized in svh because the composition is head height against the fold;
+   the vw term only guards a portrait phone. */
+.hero-plate {
+  position: absolute;
+  /* Under both pool layers, so the dithered cells run across the figure and it reads as one
+     material. -20 leaves the pool (-1) and HeroField (-10) order untouched; negative so the type,
+     in normal flow, still paints on top. */
+  z-index: -20;
+  aspect-ratio: 3 / 4;
+  --top: 25svh;
+  width: min(83svh, 88vw);
+  top: var(--top);
+  right: 9%;
+  pointer-events: none;
+  /* The cut, anchored to the DOCUMENT: full ink to 90svh, gone by 116, which dissolves the dense
+     collar at the fold. On the wrapper so the canvas and the no-JS still carry one identical cut.
+     Offsets are document svh minus the plate's own top. Mirrored below for portrait. */
+  mask-image: linear-gradient(
+    to bottom,
+    #000 calc(90svh - var(--top)),
+    transparent calc(116svh - var(--top))
+  );
+}
+
+/* Portrait: oversized past the screen (the wrapper clips) so it runs off the bottom into the pool
+   rather than stopping in mid-air. A phone gets a crop of the figure, not a small whole one. */
+@media (orientation: portrait) {
+  .hero-plate {
+    width: 130vw;
+    right: -8%;
+    /* The tighter crop puts the collar higher up the page, so the cut moves up with it. */
+    mask-image: linear-gradient(
+      to bottom,
+      #000 calc(78svh - var(--top)),
+      transparent calc(104svh - var(--top))
+    );
+  }
+}
+
+/* Upright tablets: sized from the name, because a width-based 130vw put the figure's eyes on JEREMY
+   (69% of the face covered at 768). The name is 31.6vw tall on the floor, the chin is 0.48 of the plate's height
+   (0.64 of its width), and 7.5rem puts the chin 6rem above the name, whose floor is pb-6 here: the
+   name sits low so VAASK covers where the shoulders dissolve. Centred on the face
+   (0.55 of the plate's width, flipped), which is where the phone crop puts it. */
+@media (orientation: portrait) and (min-width: 640px) {
+  .hero-plate {
+    --top: 22svh;
+    --w: calc((78svh - 31.6vw - 7.5rem) / 0.64);
+    width: var(--w);
+    right: calc(50% - 0.45 * var(--w));
+  }
+}
+
+/* HERO LOAD-IN: REGISTRATION, in two beats. The rule prints and the trade rises out of it; then, at
+   480ms and on one clock, the name comes up from under its baselines while every mark around it
+   (nav, availability, place, CTA) fades in with it, and the square lands last, at 1.06s. One shared
+   delay, duration and curve is the harmony: staggered marks read as parts arriving separately.
+   The figure takes no part: it is simply there. All CSS, so it runs from first paint on every
+   connection and with JS off; the bundle lands 0.6s (fast 4G) to 3.5s (slow 4G) later. Motion writes its initial
+   `opacity: 0` into the server HTML, which is why this is not a Motion component.
+   `scale`/`translate`, NOT `transform`: `.hero-out` owns `transform` on the same elements and the
+   two compose. `backwards`, not `both`: a forwards fill would freeze the exit's opacity.
+   `--d` is each element's delay; reading HeroTitle top to bottom is reading the sequence. */
+.reg-draw {
+  transform-origin: left;
+  animation: reg-draw 420ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+/* The mover sits inside a `.reg-clip`, which cuts at its own bottom edge: that edge is the line the
+   type rises out of. */
+.reg-clip {
+  clip-path: inset(-0.4em -2em 0 -2em);
+}
+.reg-lift {
+  animation: reg-lift 440ms cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0ms) backwards;
+}
+.reg-fade {
+  animation: reg-fade 440ms cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 480ms) backwards;
+}
+.reg-stamp {
+  animation: reg-stamp 140ms ease-out 920ms backwards;
+}
+@keyframes reg-draw {
+  from {
+    scale: 0 1;
+  }
+}
+@keyframes reg-lift {
+  from {
+    translate: 0 110%;
+  }
+}
+@keyframes reg-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes reg-stamp {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+/* THE HERO'S EXIT. `--hero-exit` (from HeroExit.tsx) is 0 at rest and 1 when the hero has left.
+   Each element takes its own window of it: `--lead` is when it starts, `--rise` how far it travels,
+   so the hero decompresses upward with depth. Opacity holds until the last 40% of the window.
+   No `will-change`: promoted layers over two live canvases cost 27ms/frame before. */
+/* Not inherited: HeroExit writes it on each `.hero-out`, so only its 7 readers restyle per frame. */
+@property --hero-exit {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+.hero-out {
+  --u: clamp(0, (var(--hero-exit) - var(--lead, 0)) / var(--span, 0.55), 1);
+  transform: translate3d(0, calc(var(--u) * var(--rise, 3rem) * -1), 0);
+  opacity: clamp(0, (1 - var(--u)) / 0.4, 1);
+}
+
+/* Hero, the DIAGONAL: trade top-left, name bottom-left, meta down the right gutter. A corner
+   holder, not a lockup: the name is flush left and ragged right.
+   Framed by its own gutter, `--gut` (96px at 1440, growing with the root), not the page column, so it
+   does not share the header's edge on purpose. If that ever reads wrong, move the header out to
+   `--gut`; do not re-cap this.
+   `cqw`, not `vw`: the measure is the content box, and `vw` counts the scrollbar. */
+.hero-band {
+  --gut: clamp(1.5rem, 6.67vw, 6rem);
+  position: relative;
+  padding-inline: var(--gut);
+}
+
+.hero-diag {
+  container-type: inline-size;
+  --hd-m: 100cqw;
+  width: 100%;
+  min-width: 0;
+}
+
+/* The masthead rule: full-bleed under the trade line. Stopping where the type stops would draw a box. */
+.hero-rule {
+  margin-inline: calc(-1 * var(--gut));
+  /* Darker than `--color-line` (1.43:1, which vanished on an iPhone): 2.3:1, still a hairline. */
+  border-top: 1px solid color-mix(in srgb, var(--color-line), var(--color-ink) 25%);
+}
+
+/* Set vertically, inside the gutter at 0.8 of it; pinned to the screen edge it reads as chrome. */
+.hero-meta-v {
+  position: absolute;
+  right: calc(var(--gut) * 0.8);
+  /* From the band's top, not the viewport: it belongs to the rule above it. */
+  top: 6rem;
+  writing-mode: vertical-rl;
+  letter-spacing: 0.3em;
+}
+
+/* One size knob for both CTAs so they stay one object. 1.15 carries the marigold-on-ink label over
+   ~16px at a 1440 window. The radius does not scale: `--radius-box` belongs to the page. */
+:root {
+  --btn-mass: 1.15;
+  --btn-f: calc(0.75rem * var(--btn-mass));
+  --btn-lh: calc(1rem * var(--btn-mass));
+  --btn-px: calc(1.25rem * var(--btn-mass));
+  --btn-py: calc(0.75rem * var(--btn-mass));
+}
+
+/* The hero's CTA, in the fourth corner. `bottom: 0`, NOT `--gut`: the section's `pb-24` is
+   already that gutter, and zero sits it on VAASK's last row. */
+.hero-cta {
+  position: absolute;
+  right: var(--gut);
+  bottom: 0;
+  font-size: var(--btn-f);
+  line-height: var(--btn-lh);
+  padding: var(--btn-py) var(--btn-px);
+}
+
+/* 4.136em is the ink width of JEREMY in Rubik 800, uppercase, -0.02em tracking. It IS the layout:
+   re-measure if the name, family, weight or tracking changes. VAASK is 3.400em.
+     landscape  JEREMY spans 55.7% of the measure  ->  4.136 / 0.557 = 7.43
+     portrait   JEREMY spans 92% of the measure    ->  4.136 / 0.92 = 4.50
+   Switched on SHAPE, not width: a portrait tablet wants the phone layout. Leading 0.82 because
+   caps-only type has no descenders to collide. */
+.hero-name {
+  font-size: calc(var(--hd-m) / 4.50);
+  line-height: 0.82;
+  letter-spacing: -0.02em;
+}
+
+@media (min-aspect-ratio: 1/1) {
+  .hero-name {
+    font-size: calc(var(--hd-m) / 7.43);
+  }
+}
+
+/* ---- 404 (not-found.tsx): the hero's frame, with the number where the name goes ----------------
+   Upright it spans the measure as JEREMY does; sideways it leaves the right third to the way out,
+   and 46svh keeps it on a short screen. */
+.nf-num {
+  font-size: calc(100cqw / 2.45);
+  line-height: 0.82;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  /* At this leading Rubik's line box ends 0.0675em under the baseline. Pulled up by that, the box
+     floor IS the baseline, so whatever sits on the floor sits on the numerals. */
+  margin-bottom: -0.0675em;
+  /* The 4's own side bearing (0.027em, 17px at 2560), hung so its ink starts on the text's edge. */
+  margin-inline-start: -0.027em;
+}
+@media (min-aspect-ratio: 1/1) {
+  .nf-num {
+    font-size: min(calc(100cqw / 3.4), 46svh);
+  }
+}
+
+/* One line whatever was typed: a long address ends in an ellipsis and keeps the whole one as its
+   title. The 0.2em pad keeps the clip off the glyphs' tops and tails without moving the line. */
+.nf-addr {
+  display: block;
+  overflow: hidden;
+  padding-block: 0.2em;
+  margin-block: -0.2em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nf-out {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25rem;
+  margin-top: 1.75rem;
+}
+/* The hero meta's size, so the two lines on the right are one voice. */
+.nf-out p {
+  font-size: clamp(0.75rem, 0.6rem + 0.5vw, 1rem);
+  letter-spacing: 0.14em;
+  line-height: 1.6;
+}
+.nf-out p span {
+  display: block;
+}
+/* The CTA's corner, flush to the same edge as Page not found. Only where it clears the number by
+   3rem: from 70rem wide, or from 50rem on a 2:1 screen (a phone on its side), where 46svh caps it. */
+@media (min-aspect-ratio: 1/1) and (min-width: 70rem), (min-aspect-ratio: 2/1) and (min-width: 50rem) {
+  .nf-out {
+    position: absolute;
+    right: var(--gut);
+    bottom: 0;
+    align-items: flex-end;
+    margin: 0;
+    text-align: right;
+  }
+}
+/* A phone on its side: the statement reaches up into the gutter mark's run. */
+@media (max-height: 30rem) {
+  .nf-meta {
+    display: none;
+  }
+}
+.nf-btn {
+  font-size: var(--btn-f);
+  line-height: var(--btn-lh);
+  padding: var(--btn-py) var(--btn-px);
+}
+
+/* The em-sized mark radius; see `--radius-box`. */
+.mark-r {
+  border-radius: 22%;
+}
+
+/* SECTION HEADING DECODE. The square lands after the letters resolve; the mechanism lives in
+   SectionHeading.tsx. The hidden state keys off `="armed"`, NOT bare `[data-reveal]`, which would also
+   match `="in"` and leave the square invisible at rest. With no JS the attribute never appears.
+   `scale` not `transform`, and `backwards`, for the same reasons as the hero load-in. */
+.sh-line {
+  display: block;
+}
+/* Unconditional, so metrics do not change when JS arrives. Natural advances, not a fixed slot
+   width: a fixed width either clips or lets a wide glyph overrun its neighbour. */
+.sh-char {
+  display: inline-block;
+}
+
+[data-reveal="armed"] .sh-mark {
+  opacity: 0;
+  scale: 0.4;
+}
+/* 90ms of silence after the last letter makes it a full stop, not one more character. */
+[data-reveal="in"] .sh-mark {
+  animation: sh-mark 140ms ease-out 90ms backwards;
+}
+
+@keyframes sh-mark {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+/* No global focus ring on this site; mirrors `.svc-trigger` and `.works-link`. The offset is small
+   and positive so the ring lands in the link's own padding instead of cutting into the type. */
+.nav-link:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 1px;
+}
+
+/* NAV MARK: the accent square means one thing, this section is in view. Always rendered and
+   opacity-toggled so the right-aligned row never reflows. Hover is a colour (below), not the square. */
+.nav-mark {
+  opacity: 0;
+  background-color: var(--color-accent);
+  transition: opacity 150ms;
+}
+.nav-link[aria-current] .nav-mark {
+  opacity: 1;
+}
+
+/* Hover colour. `.nav-row a` outranks the dark-ground flip below; the burger is a `.nav-link` with
+   no hover state. Guarded by `hover: hover` so a tap never leaves a word lit. */
+@media (hover: hover) {
+  .nav-row a.nav-link:hover {
+    color: var(--color-cursor);
+  }
+}
+
+/* MOBILE MENU. A flood wiped in from the top, then the links arrive 66ms apart. Timings measured
+   off a reference. `clip-path`, not height or transform: the paper is laid out at full size, so
+   nothing reflows mid-wipe. `visibility` waits out the exit so it is never cut dead.
+   The panel itself is TRANSPARENT and its pseudo-elements carry the paper, 8rem past both screen
+   edges: iOS Safari 26 leaves an opaque fixed `inset: 0` layer uncovered under its toolbars, and
+   the page showed at the bottom and under the status bar. */
+.m-nav {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  color: var(--color-ink);
+  visibility: hidden;
+  transition: visibility 0s 720ms;
+}
+.m-nav[data-open="true"] {
+  visibility: visible;
+  transition: visibility 0s;
+}
+.m-nav::before,
+.m-nav::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  z-index: -1;
+  background-color: var(--color-paper);
+}
+/* The wipe. Its box starts 8rem above the screen, but the closed clip sits on the screen's top edge,
+   so the edge crosses the screen exactly as before and the top bleed fills in behind it.
+   Closing: the words leave first and the paper follows at 300ms, so the two read as cause and effect. */
+.m-nav::before {
+  top: -8rem;
+  bottom: 0;
+  clip-path: inset(8rem 0 calc(100% - 8rem) 0);
+  transition: clip-path 420ms cubic-bezier(0.76, 0, 0.24, 1) 300ms;
+}
+.m-nav[data-open="true"]::before {
+  clip-path: inset(0);
+  transition: clip-path 380ms cubic-bezier(0.76, 0, 0.24, 1);
+}
+/* The bottom bleed: on when the wipe lands, off the moment the paper starts back up. */
+.m-nav::after {
+  top: 100%;
+  height: 8rem;
+  visibility: hidden;
+  transition: visibility 0s 300ms;
+}
+.m-nav[data-open="true"]::after {
+  visibility: visible;
+  transition: visibility 0s 380ms;
+}
+
+/* One rest state BELOW the panel gives an entrance that rises and an exit that falls. In is
+   expo-out, out is ease-in. `--i` is the stagger index, on the entrance only. */
+.m-item {
+  opacity: 0;
+  translate: 0 2.3rem;
+  transition:
+    opacity 260ms cubic-bezier(0.55, 0, 1, 0.45),
+    translate 380ms cubic-bezier(0.55, 0, 1, 0.45);
+}
+.m-nav[data-open="true"] .m-item {
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    opacity 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    translate 450ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* 180ms: cream over cream, the wipe itself is invisible, so waiting for it reads as a stall. */
+  transition-delay: calc(180ms + var(--i, 0) * 66ms);
+}
+
+/* THE BURGER: three 20x1 rules fold into an X. Gap 4px + bar 1px puts the outer bars 5px off
+   centre, hence `translate: 0 5px`. */
+.burger {
+  /* NO `display` here: at equal specificity this later rule would beat `md:hidden`. */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 2rem;
+  height: 2rem;
+}
+.burger span {
+  width: 20px;
+  height: 1px;
+  background-color: currentColor;
+  transition:
+    translate 240ms cubic-bezier(0.76, 0, 0.24, 1),
+    rotate 240ms cubic-bezier(0.76, 0, 0.24, 1),
+    opacity 120ms;
+}
+/* No accent bar: marigold is 1.72:1 on paper and the bar would vanish. */
+/* Sits above the panel, so the tap that opens the menu also closes it. */
+.burger[aria-expanded="true"] {
+  color: var(--color-ink);
+}
+.burger[aria-expanded="true"] span:nth-child(1) {
+  translate: 0 5px;
+  rotate: 45deg;
+}
+.burger[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+.burger[aria-expanded="true"] span:nth-child(3) {
+  translate: 0 -5px;
+  rotate: -45deg;
+}
+
+/* GROUND. Header.tsx tags each LINK with `data-on-dark` when a dark card is under its own words,
+   and it inverts to paper. Per link, because the bar straddles the front card's edge. The mobile
+   panel's links are never probed, so its paper ground can never invert. The active link flips too,
+   or it would be the one word that disappears over a dark card. */
+.nav-row .nav-link[data-on-dark] {
+  color: var(--color-paper);
+}
+/* The square declares its own accent, so it stays marigold on both grounds; hover beats this rule
+   (see the `hover: hover` block). The focus ring flips with the type. */
+.nav-row .nav-link[data-on-dark]:focus-visible {
+  outline-color: var(--color-paper);
+}
+
+/* Services accordion: a one-row grid whose track runs 0fr -> 1fr, so no height is animated or
+   measured. Not `interpolate-size`: Firefox lacks it. */
+.svc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.svc-panel[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+/* Copy fades in after the track has mostly opened, and out first on close. */
+.svc-panel > * {
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+.svc-panel[data-open="true"] > * {
+  opacity: 1;
+  transition-delay: 140ms;
+}
+
+/* Drawn from two bars, not glyphs: + and - differ in weight in Plex Mono. The change is a rotate. */
+.svc-toggle {
+  position: relative;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+.svc-toggle::before,
+.svc-toggle::after {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 1px;
+  background: currentColor;
+  transition: transform 140ms ease-out;
+}
+.svc-toggle::after {
+  transform: rotate(90deg);
+}
+[aria-expanded="true"] .svc-toggle::after {
+  transform: rotate(0deg);
+}
+
+/* Negative offset: the trigger spans the full column, so a positive ring leaves the gutter. */
+.svc-trigger:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: -3px;
+}
+
+/* Registered so an unresolved var falls back instead of killing `height`. Initial values must be
+   absolute lengths. */
+@property --mk {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 24px;
+}
+@property --a {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --k {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+/* ---- Services row 05's logo wall -----------------------------------------------------------
+   Every dimension is a calc() off `--logo`, declared on the row because the preview strip and the
+   grid live in different subtrees. Rem, never a vw clamp: the root already carries the viewport term. */
+.svc-row {
+  --logo: 1.5rem;
+}
+@media (min-width: 768px) {
+  .svc-row {
+    --logo: 2.25rem;
+  }
+}
+
+/* ink-near: fifteen full-black marks are more ink at rest than any other block. */
+.stk {
+  --mk: var(--logo);
+  color: var(--color-ink-near);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--mk) * 0.85);
+}
+/* Capped per column count so a track never stretches far past its badge. No cap past 1152, where
+   the row is a flex line. */
+.stk-grp {
+  display: flex;
+  flex-direction: column;
+  gap: max(0.75rem, calc(var(--mk) * 0.38));
+  max-width: calc(var(--mk) * 14.5);
+}
+@media (min-width: 768px) {
+  .stk-grp {
+    max-width: calc(var(--mk) * 21);
+  }
+}
+@media (min-width: 1152px) {
+  .stk-grp {
+    max-width: none;
+  }
+}
+/* Two columns on a phone, three on a tablet, and past 1152 (the page column's floor) one flex line packed at
+   natural widths. At 1152 the widest group (819px) has the panel's full 992px, at any root size. */
+.stk-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--mk) * 0.7) calc(var(--mk) * 0.5);
+  align-items: center;
+  justify-items: start;
+}
+@media (min-width: 768px) {
+  .stk-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+/* 0.9, not 0.5: in a flex line the gap alone separates a name from the next mark. */
+@media (min-width: 1152px) {
+  .stk-row {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: calc(var(--mk) * 0.9);
+  }
+}
+
+/* THE KEYLINE. Every mark fits this one square (StackWall.tsx derives each `k` against it) and sits
+   FLUSH START, so the wall shares the left edge of rows 01-04's copy. A mark wider than the keyline
+   needs `k` re-derived, not a wider box. */
+.bdg {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: calc(var(--mk) * 0.42);
+  min-height: calc(var(--mk) * 1.25);
+}
+.bdg-m {
+  display: grid;
+  place-items: center start;
+  flex: none;
+  width: calc(var(--mk) * 0.95);
+  height: calc(var(--mk) * 0.95);
+}
+/* Fixed rem, not a ratio of --mk: level with body copy, a step above the group label. Wraps
+   rather than overflowing; two lines still fit the mark box. */
+.bdg-n {
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+@media (min-width: 768px) {
+  .bdg-n {
+    font-size: 0.875rem;
+  }
+}
+
+/* A logo as a currentColor mask. `--a` is aspect and `--k` the longest edge; min/max picks which
+   edge that is. Explicit width and height keep `panelHeight()`'s read honest before masks decode. */
+.mk {
+  display: block;
+  flex: none;
+  background: currentColor;
+  height: calc(var(--mk) * 0.86 * var(--k) / max(1, var(--a)));
+  width: calc(var(--mk) * 0.86 * var(--k) * min(var(--a), 1));
+  mask: var(--mask) center / 100% 100% no-repeat;
+}
+
+/* Four marks on the closed row, always shown: touch has no hover. */
+.stk-peek {
+  --mk: calc(var(--logo) * 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: calc(var(--mk) * 0.45);
+  transition: opacity 140ms ease-out;
+}
+.svc-row[data-open="true"] .stk-peek {
+  opacity: 0;
+}
+
+/* Services hover: colour only, no geometry. The row's hairline goes ink over 300ms, the title over
+   150ms. Do not re-pitch dimming the whole list. The rule is the ROW's bottom border, so an open
+   row's hairline rides down as it opens. */
+.svc-row {
+  transition: border-bottom-color 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Rest is ink-near; the lit state is full ink. */
+.svc-title {
+  color: var(--color-ink-near);
+  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Open outlives the pointer, and lands on the same values as hover. */
+.svc-row[data-open="true"] {
+  border-bottom-color: var(--color-ink);
+}
+.svc-row[data-open="true"] .svc-title {
+  color: var(--color-ink);
+}
+@media (hover: hover) {
+  .svc-row:hover {
+    border-bottom-color: var(--color-ink);
+  }
+  .svc-row:hover .svc-title {
+    color: var(--color-ink);
+  }
+  /* No transition here: the chip's `transition-colors` utility owns it, background included. */
+  .svc-row:hover .svc-chip {
+    color: var(--color-ink);
+  }
+}
+
+/* ---- Works: the ribbon ------------------------------------------------------------------
+   Six cards on one line, each at `--p` (signed slot, written by Works.tsx) times `--gx` card widths.
+   A neighbour recedes by `--gs` and hazes by `--gv` of paper veil, never a shadow. Everything the
+   caption lines up with hangs off `--cw`, so it is declared on the section. */
+.works {
+  /* Phone: portrait, a real phone screen (375x667, the shape the phone loops are filmed at), most
+     of the width but never taller than 70svh. */
+  --cw: min(82vw, 70svh * 375 / 667);
+  --ch: calc(var(--cw) * 667 / 375);
+  --gx: 0.6;
+  --gs: 0.82;
+  --gv: 0.45;
+}
+
+@media (min-width: 768px) {
+  .works {
+    /* Half the screen, floored at 620 so a tablet's caption keeps two real columns, capped at 720
+       because the screenshots are ~1000px wide and blur past that, and held under 60svh on short
+       laptops. From 2400 wide the cap grows with the screen: there a 720 card is a third of the column. */
+    --cw: min(max(50vw, 620px), max(720px, 60vw - 720px), 60svh * 1.5);
+    --ch: calc(var(--cw) / 1.5);
+    --gx: 0.8;
+    --gs: 0.78;
+    --gv: 0.33;
+  }
+}
+
+.works-stage {
+  position: relative;
+  /* The cards' z-index (up to 100) stays inside the strip: without this they draw over the header
+     and its open menu. */
+  isolation: isolate;
+  height: var(--ch);
+  /* Horizontal drags are ours; vertical stays with the page. Works.tsx `lock` makes the call itself. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.works-stage.is-grabbing {
+  cursor: grabbing;
+}
+
+.works-card {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: var(--cw);
+  height: var(--ch);
+  margin-left: calc(var(--cw) / -2);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-box);
+  background: var(--color-ground);
+  overflow: hidden;
+  transform: translate3d(calc(var(--p) * var(--gx) * var(--cw)), 0, 0)
+    scale(calc(1 - var(--q) * (1 - var(--gs))));
+  will-change: transform;
+}
+.works-card.is-dark {
+  border-color: var(--color-ink-near);
+  background: #111;
+}
+.works-card img,
+.works-card video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  pointer-events: none;
+}
+/* Only the Launcher has no portrait still: its search and list sit on the left. */
+@media (width < 768px) {
+  .works-card img {
+    object-position: left top;
+  }
+}
+.works-veil {
+  position: absolute;
+  inset: 0;
+  background: var(--color-paper);
+  opacity: calc(var(--q) * var(--gv));
+  pointer-events: none;
+}
+/* 21:9 is wide enough to show slots ±2, which repeat the neighbours as a fifth card. Fade them out
+   between |p| 1.5 and 2 so each project shows once; max(p, -p) is |p| without CSS abs(). 9/4, not
+   2/1: a 1080p browser window is 2:1 and keeps its slivers. */
+@media (min-width: 1600px) and (min-aspect-ratio: 9/4) {
+  .works-card {
+    opacity: clamp(0, (2 - max(var(--p), -1 * var(--p))) * 2, 1);
+  }
+}
+
+/* ---- the caption. Phone: name and numbers share a line, the words and the stack below. From md
+   it is F3: two columns exactly as wide as the card, words left, stack, link and numbers right. */
+.works-cap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: center;
+  margin: 20px 24px 0;
+}
+.works-t {
+  grid-area: 1 / 1;
+}
+.works-d {
+  grid-area: 2 / 1 / 3 / 3;
+  margin-top: 10px;
+}
+.works-side {
+  display: contents;
+}
+.works-m {
+  grid-area: 3 / 1 / 4 / 3;
+  margin-top: 14px;
+}
+.works-nums {
+  grid-area: 1 / 2;
+}
+
+/* Every project in one cell, only one visible: the cell is as tall as its longest project at this
+   width, so nothing below it moves between projects. */
+.works-slot {
+  display: grid;
+}
+.works-slot > * {
+  grid-area: 1 / 1;
+}
+.works-slot > [data-on="false"] {
+  visibility: hidden;
+}
+
+.works-title {
+  margin: 0;
+  /* 22px at 360 keeps "Seniors' Club" beside the numbers; narrower screens wrap the name. */
+  font-size: clamp(1.25rem, 6.15vw, 1.5rem);
+  line-height: 1.1;
+}
+.works-desc {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+.works-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.works-stack {
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+}
+/* A mono space is a full letter wide, so " · " is three cells: pull the dot in to its words. */
+.works-dot {
+  letter-spacing: 0;
+  margin: 0 -0.3em;
+}
+.works-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  /* The fill's box bleeds 4px past the column so the word itself stays on the column's edge. */
+  margin-inline: -4px;
+  padding: 0 4px;
+  border-radius: 2px;
+  font-size: 0.875rem;
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition:
+    background-color 150ms ease-out,
+    text-decoration-color 150ms ease-out;
+}
+.works-link.is-fill,
+.works-link:hover {
+  background: var(--color-accent);
+  text-decoration-color: transparent;
+}
+.works-link.is-fill {
+  margin-inline: 0;
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+.works-link:focus-visible,
+.works-nums button:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 3px;
+}
+
+@media (min-width: 768px) {
+  .works-cap {
+    width: min(max(var(--cw), 620px), 100% - 48px);
+    margin: 28px auto 0;
+    column-gap: 40px;
+    align-items: start;
+  }
+  .works-t {
+    grid-area: 1 / 1;
+  }
+  .works-d {
+    grid-area: 2 / 1;
+  }
+  .works-side {
+    grid-area: 1 / 2 / 3 / 3;
+    display: grid;
+    justify-items: end;
+    align-content: start;
+    gap: 10px;
+    padding-top: 6px;
+  }
+  .works-m {
+    margin-top: 0;
+  }
+  .works-meta {
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .works-title {
+    font-size: 1.875rem;
+    white-space: nowrap;
+  }
+  .works-desc {
+    font-size: 0.9375rem;
+  }
+  .works-stack {
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+  }
+  .works-dot {
+    letter-spacing: inherit;
+    margin: 0;
+  }
+}
+
+/* The words step aside the way the cards go: out 160ms toward the old side, in 300ms from the new. */
+.works-sw {
+  transition:
+    opacity 160ms cubic-bezier(0.4, 0, 1, 1),
+    transform 160ms cubic-bezier(0.4, 0, 1, 1);
+}
+[data-swap="out"] .works-sw {
+  opacity: 0;
+  transform: translateX(calc(var(--d) * -14px));
+}
+[data-swap="gone"] .works-sw {
+  opacity: 0;
+  transform: translateX(calc(var(--d) * 14px));
+  transition: none;
+}
+[data-swap="in"] .works-sw {
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* ---- CONTACT: the closing block ----------------------------------------------------------
+   The channels as rows, the form in a box under them, then the floor. */
+.ct-links {
+  margin-top: 2rem;
+  border-top: 1px solid var(--color-line);
+}
+@media (min-width: 768px) {
+  .ct-links {
+    margin-top: 4rem;
+  }
+}
+
+/* The Services row device: hairline on the row's BOTTOM edge, ink on hover, colour only. */
+.ct-lk {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.125rem 0 1.25rem;
+  border-bottom: 1px solid var(--color-line);
+  transition: border-bottom-color 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ct-ix {
+  color: var(--color-ink-soft);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ct-v {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--color-ink-near);
+  font-size: 1.25rem;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* A phone has no hover, so the arrow is the only thing saying "link": full size, full ink. */
+.ct-arw {
+  flex: none;
+  color: var(--color-ink);
+  font-size: 1em;
+  font-weight: 400;
+}
+@media (min-width: 768px) {
+  .ct-v {
+    font-size: 2.5rem;
+  }
+  .ct-arw {
+    color: inherit;
+    font-size: 0.55em;
+  }
+}
+/* Inside hover:hover, so a tap cannot leave a phone's row lit; :active is the touch version. */
+@media (hover: hover) {
+  .ct-lk:hover {
+    border-bottom-color: var(--color-ink);
+  }
+  .ct-lk:hover .ct-ix,
+  .ct-lk:hover .ct-v {
+    color: var(--color-ink);
+  }
+}
+.ct-lk:active {
+  border-bottom-color: var(--color-ink);
+}
+.ct-lk:active .ct-v {
+  color: var(--color-ink);
+}
+
+/* ---- the form. One box, one field per row. The padding and the gap above Send are ONE number
+   (1.25/2.5rem), so Send's corner is even on all three sides. ---- */
+.cf-stack {
+  display: grid;
+  margin-top: 2.5rem;
+}
+.cf-stack > * {
+  grid-area: 1 / 1;
+}
+.cf-box {
+  --fline: color-mix(in srgb, var(--color-ink-soft) 75%, var(--color-paper));
+  display: flex;
+  flex-direction: column;
+  gap: 1.625rem;
+  padding: 1.25rem;
+  border: 1px solid var(--color-line);
+}
+@media (min-width: 768px) {
+  .cf-stack {
+    margin-top: 4rem;
+  }
+  .cf-box {
+    gap: 2rem;
+    padding: 2.5rem;
+  }
+}
+
+.cf-lab {
+  color: var(--color-ink);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* The line you write on belongs to the field above it. ink-soft 75% into paper is 3.25:1: an empty
+   field's only outline has to pass 3:1, which --line (1.43:1) does not. */
+.cf-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--fline);
+  cursor: text;
+  transition: border-bottom-color 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (hover: hover) {
+  .cf-row:hover {
+    border-bottom-color: var(--color-ink-soft);
+  }
+}
+.cf-row:focus-within {
+  border-bottom-color: var(--color-ink);
+}
+/* Hit area only: the gap above a row and the box's side padding belong to that row's label, so no
+   click between the box edges misses a field. Insets are the box's gap and padding. */
+.cf-row {
+  position: relative;
+}
+.cf-row::before {
+  content: "";
+  position: absolute;
+  inset: -1.625rem -1.25rem 0;
+}
+@media (min-width: 768px) {
+  .cf-row::before {
+    inset: -2rem -2.5rem 0;
+  }
+}
+
+.cf-ix {
+  color: var(--color-ink-soft);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cf-row:focus-within .cf-ix {
+  color: var(--color-ink);
+}
+
+.cf-in {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.5;
+  outline: 0;
+}
+/* Lightened ink-soft, 3.6:1. The label is the accessible name; this only marks where typing lands. */
+.cf-in::placeholder {
+  color: color-mix(in srgb, var(--color-ink-soft) 80%, var(--color-paper));
+  opacity: 1;
+}
+
+.cf-area {
+  height: 6rem;
+  resize: none;
+}
+
+/* Pulls the box's gap back to its padding: 1.625 - 0.375 = 1.25, and 2 + 0.5 = 2.5. */
+.cf-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.375rem;
+}
+@media (min-width: 768px) {
+  .cf-in {
+    font-size: 1.1875rem;
+  }
+  .cf-area {
+    height: 6.875rem;
+  }
+  .cf-foot {
+    margin-top: 0.5rem;
+  }
+}
+
+.cf-stmt {
+  color: var(--color-ink-soft);
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+/* The page's one button size, off `--btn-mass`: two buttons at two sizes are two objects. */
+.cf-send {
+  padding: var(--btn-py) var(--btn-px);
+  border: 0;
+  cursor: pointer;
+  font-size: var(--btn-f);
+  line-height: var(--btn-lh);
+  transition:
+    translate 150ms cubic-bezier(0.2, 0.7, 0.3, 1),
+    background-color 150ms linear,
+    color 150ms linear;
+}
+/* The knockout flips on hover: the plate becomes the fill the type was. Same pair either way
+   round (8.93:1), so the press state is a reversal, not a second colour. */
+.cf-send:hover:not(:disabled) {
+  translate: 0 -2px;
+  background-color: var(--color-accent);
+  color: var(--color-ink);
+}
+.cf-send:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+.cf-send:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+/* No semantic red: full ink at the statement's size is the signal. */
+.cf-err:not(:empty) {
+  margin-top: 1rem;
+  color: var(--color-ink);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.cf-hp {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The send confirmation: the form's own box, emptied and answered. Its border stays and only the
+   contents cross, so the box never blinks. Same padding, so Sent lands on the label's corner. The
+   answer comes in 100ms late, so the two never sit on top of each other at full strength. */
+.cf-box > * {
+  transition: opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cf-box[data-gone] > * {
+  opacity: 0;
+}
+.cf-sent {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  outline: 0;
+  transition: opacity 200ms cubic-bezier(0.16, 1, 0.3, 1) 100ms;
+}
+@starting-style {
+  .cf-sent {
+    opacity: 0;
+  }
+}
+/* The hero meta's size. From md it takes Send's corner: the answer lands where the click was. */
+.cf-reply {
+  font-size: clamp(0.75rem, 0.6rem + 0.5vw, 1rem);
+  overflow-wrap: anywhere;
+}
+@media (min-width: 768px) {
+  .cf-sent {
+    padding: 2.5rem;
+  }
+  .cf-reply {
+    align-self: flex-end;
+    text-align: right;
+  }
+}
+
+/* The floor. Both layers are ContactFloor's canvases (FloorPool's shape is no CSS gradient), so on
+   paper alone this is the finished state. */
+.ct-floor {
+  position: relative;
+  height: 16.25rem;
+  margin-top: 0.5rem;
+}
+@media (min-width: 768px) {
+  .ct-floor {
+    height: 21.25rem;
+  }
+}
+
+.ct-base {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 1.75rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--color-ink);
+  text-transform: uppercase;
+}
+/* One voice for both ends of the row: neither outranks the other. */
+.ct-sign,
+.ct-top {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+}
+@media (min-width: 768px) {
+  .ct-base {
+    bottom: 2.5rem;
+  }
+  .ct-sign,
+  .ct-top {
+    font-size: 0.9375rem;
+    letter-spacing: 0.22em;
+  }
+}
+
+.ct-sign,
+.ct-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75em;
+}
+/* The arrow moves, the words do not: tracking a hover on letter-spaced mono re-flows the line. */
+.ct-sign .arw,
+.ct-top .arw {
+  display: inline-block;
+  transition: translate 260ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+/* The sign's arrow adds 17px to the row, and under 390px the row does not have that to spare: both
+   ends would break onto two lines. */
+@media (width < 390px) {
+  .ct-sign .arw {
+    display: none;
+  }
+}
+.ct-sign:hover .arw {
+  translate: 3px -3px;
+}
+.ct-top:hover .arw {
+  translate: 0 -4px;
+}
+
+/* Film-grain overlay: a barely-there paper tooth across the whole page. Fixed and
+   pointer-events:none so it tints everything uniformly without ever intercepting clicks. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    /* Delay too: a delayed `backwards` animation would hold the hero's square invisible for 0.92s. */
+    animation-delay: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  /* Colour is not motion: the Services hover crossfades stay, geometry stays flattened. */
+  .svc-row,
+  .svc-title,
+  .svc-chip,
+  .svc-trigger {
+    transition-duration: 300ms !important;
+  }
+  .svc-title,
+  .svc-chip,
+  .svc-trigger {
+    transition-duration: 150ms !important;
+  }
+
+  /* Works: the ribbon jumps (Works.tsx), the words crossfade in place, the link fill still fades. */
+  .works-sw,
+  .works-link {
+    transition-duration: 150ms !important;
+  }
+  .works-sw {
+    transform: none !important;
+  }
+}
