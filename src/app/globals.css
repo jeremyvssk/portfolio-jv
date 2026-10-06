@@ -226,8 +226,9 @@ body::after {
    `scale`/`translate`, NOT `transform`: `.hero-out` owns `transform` on the same elements and the
    two compose. `backwards`, not `both`: a forwards fill would freeze the exit's opacity.
    `--d` is each element's delay; reading HeroTitle top to bottom is reading the sequence. */
+/* The rule draws by clip, not `scale: 0 1`: it never showed in any iPhone browser, and a GPU layer
+   that starts at zero width was the one thing it did that nothing else on the page does. */
 .reg-draw {
-  transform-origin: left;
   animation: reg-draw 420ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
 }
 /* The mover sits inside a `.reg-clip`, which cuts at its own bottom edge: that edge is the line the
@@ -246,7 +247,10 @@ body::after {
 }
 @keyframes reg-draw {
   from {
-    scale: 0 1;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0);
   }
 }
 @keyframes reg-lift {
@@ -295,6 +299,16 @@ body::after {
   padding-inline: var(--gut);
 }
 
+/* iOS only (`-webkit-touch-callout` is iOS WebKit's alone). Safari 26 draws the page under its
+   floating bar, past even `100lvh`: an 844px iPhone reports a 660px viewport and shows ~797px. The
+   hero's height and floor in page.tsx both add this, so About's heading clears the screen and the
+   name does not move. */
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --ios-bar: 5rem;
+  }
+}
+
 .hero-diag {
   container-type: inline-size;
   --hd-m: 100cqw;
@@ -303,10 +317,13 @@ body::after {
 }
 
 /* The masthead rule: full-bleed under the trade line. Stopping where the type stops would draw a box. */
+/* A 1px fill, not a border: a plain colour is the one thing WebKit can put on a layer without
+   painting it. */
 .hero-rule {
+  height: 1px;
   margin-inline: calc(-1 * var(--gut));
-  /* Darker than `--color-line` (1.43:1, which vanished on an iPhone): 2.3:1, still a hairline. */
-  border-top: 1px solid color-mix(in srgb, var(--color-line), var(--color-ink) 25%);
+  /* Darker than `--color-line` (1.43:1): 2.3:1, still a hairline. */
+  background-color: color-mix(in srgb, var(--color-line), var(--color-ink) 25%);
 }
 
 /* Set vertically, inside the gutter at 0.8 of it; pinned to the screen edge it reads as chrome. */
@@ -1207,8 +1224,10 @@ body::after {
   border-bottom-color: var(--color-ink);
 }
 /* Hit area only: the gap above a row and the box's side padding belong to that row's label, so no
-   click between the box edges misses a field. Insets are the box's gap and padding. */
-.cf-row {
+   click between the box edges misses a field. Insets are the box's gap and padding. The field sits
+   above it, so a click on the field is the field's own (caret placement, word select). */
+.cf-row,
+.cf-in {
   position: relative;
 }
 .cf-row::before {
@@ -1398,6 +1417,21 @@ body::after {
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.18em;
+}
+/* The row is 320px wide at the base tracking, so under 375px both ends break onto two lines. 360
+   only needs the tracking eased; below it the size comes down as well. */
+@media (width < 375px) {
+  .ct-sign,
+  .ct-top {
+    letter-spacing: 0.14em;
+  }
+}
+@media (width < 360px) {
+  .ct-sign,
+  .ct-top {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+  }
 }
 @media (min-width: 768px) {
   .ct-base {

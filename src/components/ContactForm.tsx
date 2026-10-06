@@ -18,6 +18,18 @@ export default function ContactForm() {
     if (sent) sentRef.current?.focus({ preventScroll: true });
   }, [sent]);
 
+  // A press on a row's label area focuses its field on the press, as the field itself would. Left to
+  // the label, focus waits for the release: Firefox drops it if the mouse moved 3px, and a double
+  // click blurs the field. Taps still get the label's own activation.
+  function onRowPress(e: React.MouseEvent<HTMLFormElement>) {
+    const t = e.target as HTMLElement;
+    if (e.button !== 0 || t.classList.contains("cf-in")) return;
+    const field = t.closest(".cf-row")?.querySelector<HTMLElement>(".cf-in");
+    if (!field) return;
+    e.preventDefault();
+    field.focus();
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (state === "sending") return;
@@ -48,6 +60,7 @@ export default function ContactForm() {
       <div className="cf-stack">
         <form
           onSubmit={onSubmit}
+          onMouseDown={onRowPress}
           noValidate={false}
           inert={sent}
           data-gone={sent || undefined}

@@ -47,10 +47,11 @@ export default function Home() {
             bottom as off the side. Upright tablets keep 1.5rem so the name covers the shoulders' fade.
             `lvh` plus the toolbar's height (`100lvh - 100svh`) on the floor: iOS Safari draws the page
             under its toolbars, so an `svh` hero showed About's heading on load. The name stays where
-            `svh` put it; on screens without toolbars the two units are equal and nothing moves. */}
+            `svh` put it; on screens without toolbars the two units are equal and nothing moves.
+            `--ios-bar` (globals.css) is the extra iOS 26 needs, since it draws past `lvh` too. */}
         <section
           id="top"
-          className="flex min-h-lvh flex-col pb-[calc(1.5rem+100lvh-100svh)] pt-24 md:pt-28 md:landscape:pb-[calc(6rem+100lvh-100svh)]"
+          className="flex min-h-[calc(100lvh+var(--ios-bar,0px))] flex-col pb-[calc(1.5rem+100lvh-100svh+var(--ios-bar,0px))] pt-24 md:pt-28 md:landscape:pb-[calc(6rem+100lvh-100svh+var(--ios-bar,0px))]"
         >
           <HeroTitle />
         </section>
